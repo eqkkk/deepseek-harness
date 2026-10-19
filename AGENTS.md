@@ -29,6 +29,7 @@ packages/    @deepseek-ai/dsh-<pkg> workspaces at packages/<group>/<pkg>/
   bundle/      installable dsh --profile patch-layer bundles
   workflow/    workflow capability + worker-thread provider + tool Consumer
   todo/        todo_write tool
+  plugin/      opt-in Host tool plugins, including xu-datakit ask
   plan/        plan mode as logged state
   preset/      per-session agent composition from preset cordis.yml files
   guard/       loop-hygiene + tool-timeout plugins

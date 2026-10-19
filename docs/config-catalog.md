@@ -1534,6 +1534,34 @@ export interface PlanModeConfig {
 
 Source: [`packages/plan/plan-mode/src/index.ts:70`](../packages/plan/plan-mode/src/index.ts)
 
+<a id="deepseek-aidsh-plugin-xu-datakit-ask"></a>
+
+## `@deepseek-ai/dsh-plugin-xu-datakit-ask`
+
+Requires: `tools`
+
+```ts config-catalog
+/** Deployment settings. Blank `baseUrl` falls through to `XU_DATAKIT_BASE_URL`. */
+export interface Config {
+  /** Origin of the xu-datakit HTTP API. */
+  baseUrl?: string
+  /** Credential reference resolved per request. Default `XU_DATAKIT_TOKEN`. */
+  tokenRef?: string
+  /** Platform role the referenced token is expected to have. Default `query`. */
+  role?: 'query' | 'ops' | 'admin'
+  /** Domain named in the `discover_bt` description. Default `net`. */
+  sampleDomain?: string
+  /** Send `X-Datakit-Debug: plan` on platform requests. Default false. */
+  debugPlan?: boolean
+  /** Cooperative tool timeout in milliseconds. Default 30000. */
+  timeoutMs?: number
+  /** Maximum accepted response body in bytes. Default 1048576. */
+  maxResponseBytes?: number
+}
+```
+
+Source: [`packages/plugin/xu-datakit-ask/src/index.ts:26`](../packages/plugin/xu-datakit-ask/src/index.ts)
+
 <a id="deepseek-aidsh-pwsh-local"></a>
 
 ## `@deepseek-ai/dsh-pwsh-local`
