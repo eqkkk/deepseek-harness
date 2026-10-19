@@ -129,7 +129,7 @@ function installFetch(): void {
       url: requestUrl(input),
       headers,
       ...body === undefined ? {} : { body },
-      redirect: init?.redirect,
+      ...init?.redirect === undefined ? {} : { redirect: init.redirect },
     }
     calls.push(call)
     if (fault === 'hang') {
