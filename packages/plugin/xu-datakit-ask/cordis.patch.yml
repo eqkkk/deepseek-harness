@@ -1,0 +1,11 @@
+# Opt-in xu-datakit ask tools. The profile still needs XU_DATAKIT_BASE_URL and
+# a query-role credential named by tokenRef (default XU_DATAKIT_TOKEN).
+# This patch does not open a physical SQL channel.
+
+- insert:
+    - id: xu-datakit-ask
+      name: '@deepseek-ai/dsh-plugin-xu-datakit-ask'
+      config:
+        tokenRef: XU_DATAKIT_TOKEN
+        role: query
+        sampleDomain: net
