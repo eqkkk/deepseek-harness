@@ -12,7 +12,7 @@ Status: implemented
 
 `@deepseek-ai/dsh-plugin-xu-datakit-ask` 位于 `packages/plugin/xu-datakit-ask`。`plugin/` 是没有 `package.json` 的分组容器。该包是函数插件，具名导出 `name`、`inject`、`Config` 和 `apply`，没有默认导出。它通过 `ctx.tools.register` 注册 `discover_bt`、`semantic_query`、`drilldown` 和 `cite`。
 
-`discover_bt` 调用 `GET /api/v1/business-tables` 和 `GET /api/v1/business-tables/{id}`。`semantic_query` 调用 `POST /api/v1/business-tables/{id}/query`。`drilldown` 调用 `POST /api/v1/records/query`。`cite` 不发起 HTTP。客户端拆开 `ApiResponse` 信封，以 bearer 令牌发送凭证，并使用 `redirect: 'error'`。`baseUrl` 为空白时，由 `XU_DATAKIT_BASE_URL` 提供源站。`tokenRef` 默认为 `XU_DATAKIT_TOKEN`。已挂载的 `ctx.credentials` 服务具有决定权。
+`discover_bt` 调用 `GET /api/v1/business-tables` 和 `GET /api/v1/business-tables/{id}`。`semantic_query` 与 `drilldown` 都调用 `POST /api/v1/business-tables/{id}/query`。聚合请求体是 `metrics`、`dimensions`、`filters`、`orderBy` 和 `limit`。明细请求体是 `filters`、`columns`、`limit`、`offset`，以及模型提供了 `parentQueryId` 时的该字段。业务表 id 在路径段里。`cite` 不发起 HTTP。客户端拆开 `ApiResponse` 信封，以 bearer 令牌发送凭证，并使用 `redirect: 'error'`。`baseUrl` 为空白时，由 `XU_DATAKIT_BASE_URL` 提供源站。`tokenRef` 默认为 `XU_DATAKIT_TOKEN`。已挂载的 `ctx.credentials` 服务具有决定权。
 
 参数对象保留 `minimum`、`maximum` 和 `minItems`，使模型看到工具草图中的界限。`parseArgs` 在 HTTP 之前强制这些界限，因为 `@deepseek-ai/dsh-tools` 的输出校验只接受更小的 JSON Schema 子集。输出对象留在该子集内。
 
@@ -38,7 +38,7 @@ Status: implemented
 
 ## 后果
 
-插入 `@deepseek-ai/dsh-plugin-xu-datakit-ask` 的 profile 会把四个工具暴露给 CLI agent。真实调用需要 `XU_DATAKIT_BASE_URL` 和查询凭证。契约测试模拟三条 HTTP 路由和本地引用步骤；套件不调用真实平台，因此源站缺失时没有被跳过的断言。
+插入 `@deepseek-ai/dsh-plugin-xu-datakit-ask` 的 profile 会把四个工具暴露给 CLI agent。真实调用需要 `XU_DATAKIT_BASE_URL` 和查询凭证。契约测试模拟列表路由、详情路由和共用的 query 路由，包括该 query 路由上的下钻请求体，以及本地引用步骤。套件不调用真实平台，因此源站缺失时没有被跳过的断言。
 
 这个包没有给 `packages/core` 带来 diff。没有物理 SQL 的 `run` 路径。harness 子集省略的参数界限仍在本地被拒绝，因此超范围的 `limit` 不会到达 xu-datakit。引用记忆不能在进程重启后保留，也不在 agent id 之间共享。
 

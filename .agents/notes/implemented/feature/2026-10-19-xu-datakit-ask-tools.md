@@ -12,7 +12,7 @@ Intelligent-ask MVP D1 needs four model-facing tools that discover business tabl
 
 `@deepseek-ai/dsh-plugin-xu-datakit-ask` lives at `packages/plugin/xu-datakit-ask`. `plugin/` is a group container with no `package.json`. The package is a function plugin with named exports `name`, `inject`, `Config`, and `apply`, and no default export. It registers `discover_bt`, `semantic_query`, `drilldown`, and `cite` through `ctx.tools.register`.
 
-`discover_bt` calls `GET /api/v1/business-tables` and `GET /api/v1/business-tables/{id}`. `semantic_query` calls `POST /api/v1/business-tables/{id}/query`. `drilldown` calls `POST /api/v1/records/query`. `cite` performs no HTTP. The client unwraps an `ApiResponse` envelope and sends the credential as a bearer token with `redirect: 'error'`. `XU_DATAKIT_BASE_URL` supplies the origin when `baseUrl` is blank. `tokenRef` defaults to `XU_DATAKIT_TOKEN`. A mounted `ctx.credentials` service is authoritative.
+`discover_bt` calls `GET /api/v1/business-tables` and `GET /api/v1/business-tables/{id}`. `semantic_query` and `drilldown` both call `POST /api/v1/business-tables/{id}/query`. The aggregate body is `metrics`, `dimensions`, `filters`, `orderBy`, and `limit`. The detail body is `filters`, `columns`, `limit`, `offset`, and `parentQueryId` when the model sent one. The business table id is the path segment. `cite` performs no HTTP. The client unwraps an `ApiResponse` envelope and sends the credential as a bearer token with `redirect: 'error'`. `XU_DATAKIT_BASE_URL` supplies the origin when `baseUrl` is blank. `tokenRef` defaults to `XU_DATAKIT_TOKEN`. A mounted `ctx.credentials` service is authoritative.
 
 Parameter objects keep `minimum`, `maximum`, and `minItems` so the model sees the bounds from the tool sketch. `parseArgs` enforces those bounds before HTTP because output validation in `@deepseek-ai/dsh-tools` accepts a smaller JSON Schema subset. Output objects stay inside that subset.
 
@@ -38,7 +38,7 @@ This change stays on the current `master` at `0.1.1-rc.2`. It does not fast-forw
 
 ## Consequences
 
-A profile that inserts `@deepseek-ai/dsh-plugin-xu-datakit-ask` exposes the four tools to the CLI agent. Live calls need `XU_DATAKIT_BASE_URL` and a query credential. Contract tests mock the three HTTP routes and the local citation step, and they skip no assertion when the origin is absent because the suite does not call a live platform.
+A profile that inserts `@deepseek-ai/dsh-plugin-xu-datakit-ask` exposes the four tools to the CLI agent. Live calls need `XU_DATAKIT_BASE_URL` and a query credential. Contract tests mock the list route, the detail route, and the shared query route, including a drilldown body on that query route, and the local citation step. The suite does not call a live platform, so a missing origin does not skip an assertion.
 
 `packages/core` has no diff from this package. There is no `run` path for physical SQL. Parameter bounds that the harness subset omits are still rejected locally, so an out-of-range `limit` does not reach xu-datakit. Citation memory does not survive a process restart and is not shared across agent ids.
 

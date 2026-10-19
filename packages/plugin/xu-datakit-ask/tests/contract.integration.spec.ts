@@ -405,8 +405,15 @@ describe('xu-datakit ask contract', () => {
     }, { agentId: agentA })) as { rows: unknown[]; columns: string[] }
     expect(drilled.columns).toEqual(['city'])
     expect(drilled.rows).toEqual([{ city: 'bj' }])
-    expect(calls[0]?.url).toBe('http://datakit.test/api/v1/records/query')
-    expect(calls[0]?.body).toMatchObject({ businessTableId: 'bt-a', parentQueryId: 'q1', limit: 50, offset: 0 })
+    expect(calls[0]?.method).toBe('POST')
+    expect(calls[0]?.url).toBe('http://datakit.test/api/v1/business-tables/bt-a/query')
+    expect(calls[0]?.body).toEqual({
+      filters: [{ field: 'city', op: 'eq', value: 'bj' }],
+      columns: ['city'],
+      limit: 50,
+      offset: 0,
+      parentQueryId: 'q1',
+    })
     expect(text(await call(ctx, 'drilldown', {
       businessTableId: 'bt-a',
       filters: [{ field: 'city', op: 'eq', value: 'bj' }],
@@ -482,7 +489,14 @@ describe('xu-datakit ask contract', () => {
       offset: 5,
       limit: 1,
     }, { agentId: 'a' })
-    expect(calls[0]?.body).toMatchObject({ businessTableId: 'bt-b', offset: 5, limit: 1, parentQueryId: 'q-from-id' })
+    expect(calls[0]?.url).toBe('http://datakit.test/api/v1/business-tables/bt-b/query')
+    expect(calls[0]?.body).toEqual({
+      filters: [{ field: 'a', op: 'eq', value: null }],
+      columns: [],
+      limit: 1,
+      offset: 5,
+      parentQueryId: 'q-from-id',
+    })
     respond = () => ({ text: envelope([{ z: 1 }]) })
     const bare = succeeded(await call(ctx, 'semantic_query', { businessTableId: 'bt-a', metrics: ['bytes'] }, { agentId: 'a' })) as { queryId?: string; columns: string[] }
     expect(bare.queryId).toBeUndefined()
@@ -494,7 +508,14 @@ describe('xu-datakit ask contract', () => {
       parentQueryId: 'unlinked',
       filters: [{ field: 'a', op: 'eq', value: 1 }],
     }, { agentId: 'a' })
-    expect(calls[0]?.body).toMatchObject({ parentQueryId: 'unlinked' })
+    expect(calls[0]?.url).toBe('http://datakit.test/api/v1/business-tables/bt-a/query')
+    expect(calls[0]?.body).toEqual({
+      filters: [{ field: 'a', op: 'eq', value: 1 }],
+      columns: [],
+      limit: 50,
+      offset: 0,
+      parentQueryId: 'unlinked',
+    })
     expect(text(await call(ctx, 'semantic_query', { businessTableId: 'select', metrics: ['bytes'] }))).toContain('Rephrase the question')
     expect(text(await call(ctx, 'semantic_query', { businessTableId: 'bt-a', metrics: ['select'] }))).toContain('Rephrase the question')
     expect(text(await call(ctx, 'semantic_query', { businessTableId: 'bt-a' }))).toContain('required')
@@ -720,6 +741,7 @@ describe('xu-datakit ask contract', () => {
       const source = readFileSyncSync(file, 'utf8')
       expect(source.toLowerCase()).not.toContain('jdbc')
       expect(source.toLowerCase()).not.toContain('run_sql')
+      expect(source).not.toContain('api/v1/records')
     }
   })
 })

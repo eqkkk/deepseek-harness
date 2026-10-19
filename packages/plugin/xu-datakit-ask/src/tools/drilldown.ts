@@ -1,5 +1,7 @@
 /**
  * `drilldown`: one detail page for the previous aggregate.
+ * The call is `POST /api/v1/business-tables/{id}/query`, the same path as `semantic_query`.
+ * The body is the detail form: filters, columns, limit, offset, and `parentQueryId` when present.
  * @module @deepseek-ai/dsh-plugin-xu-datakit-ask/tools/drilldown
  */
 
@@ -7,7 +9,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { JsonSchemaNode } from '@deepseek-ai/dsh-tools'
 import type { AskTransport } from '../client/http.ts'
 import { tabularResult } from '../client/normalize.ts'
-import { RECORDS_PATH } from '../client/routes.ts'
+import { queryPath } from '../client/routes.ts'
 import { asJson } from '../json.ts'
 import { predicatesOf, rememberDrill, type AskLedger } from '../ledger.ts'
 import { DRILLDOWN_PARAMETERS } from '../schema.ts'
@@ -66,13 +68,12 @@ export function registerDrilldown(ctx: Context, deps: DrilldownDeps): void {
       const columns = Array.isArray(args.columns) ? args.columns as string[] : []
       const limit = args.limit as number
       const offset = args.offset as number
-      const data = await deps.transport.request('POST', RECORDS_PATH, asJson({
-        businessTableId,
-        ...parentQueryId === undefined ? {} : { parentQueryId },
+      const data = await deps.transport.request('POST', queryPath(businessTableId), asJson({
         filters,
         columns,
         limit,
         offset,
+        ...parentQueryId === undefined ? {} : { parentQueryId },
       }), exec.signal)
       const table = tabularResult(data, limit)
       rememberDrill(ledger, {

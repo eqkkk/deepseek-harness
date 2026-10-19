@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-Read-only xu-datakit ask tools for one Host. The plugin registers `discover_bt`, `semantic_query`, `drilldown`, and `cite` on `ctx.tools`. Aggregate and drilldown calls go to the platform HTTP API. `cite` assembles an audit citation in process. The package opens no physical SQL channel.
+Read-only xu-datakit ask tools for one Host. The plugin registers `discover_bt`, `semantic_query`, `drilldown`, and `cite` on `ctx.tools`. `discover_bt` uses GET list and GET detail. `semantic_query` and `drilldown` both POST `/api/v1/business-tables/{id}/query`. `cite` assembles an audit citation in process. The package opens no physical SQL channel.
 
 ## Tools
 
@@ -10,8 +10,10 @@ Read-only xu-datakit ask tools for one Host. The plugin registers `discover_bt`,
 |---|---|---|
 | `discover_bt` | `GET /api/v1/business-tables?domain=` then `GET /api/v1/business-tables/{id}` | `Discovered <n> business table(s) in domain <domain>.` |
 | `semantic_query` | `POST /api/v1/business-tables/{id}/query` | `Aggregate result for <id>: <n> row(s).` and, when the platform returns an id, ` Query id: <queryId>.` |
-| `drilldown` | `POST /api/v1/records/query` | `Drilldown for <id>: <n> row(s).` |
+| `drilldown` | `POST /api/v1/business-tables/{id}/query` | `Drilldown for <id>: <n> row(s).` |
 | `cite` | none | `Citation: business tables <ids>. Predicates: <predicates>. Query ids: <ids>. Columns: <columns>.` plus ` Note: <note>.` when `note` is a non-empty string. |
+
+`semantic_query` posts `metrics`, `dimensions`, `filters`, `orderBy`, and `limit`. `drilldown` posts `filters`, `columns`, `limit`, `offset`, and `parentQueryId` when the model supplied one. The business table id is the path segment.
 
 `semantic_query` remembers the business table, filters, columns, and query id for the calling agent. `drilldown` may run once for that memory. The next successful `semantic_query` on the same agent replaces it. `cite` unions the model's ids, predicates, and query ids with that memory and copies the remembered columns. An empty predicate list, query-id list, or column list renders as `(none)`.
 
@@ -95,5 +97,5 @@ Append-only. Each result follows the reusable request prefix and does not replac
 - **Opt-in only** — default Headless and base profiles do not mount the plugin. A profile inserts the patch before the tools exist.
 - **Process-local citation memory** — the last aggregate and the one-shot drilldown latch live in memory, keyed by agent id. A restart drops them. The package appends no session event of its own.
 - **One drilldown per aggregate** — a second `drilldown` on the same agent is rejected until the next successful `semantic_query` replaces that memory.
-- **No physical SQL channel** — the client calls the four documented HTTP routes, or none for `cite`. Blocked query text is refused or omitted.
+- **No physical SQL channel** — `discover_bt` uses the two GET business-table routes. `semantic_query` and `drilldown` both POST `.../query`. `cite` does not call the platform. Blocked query text is refused or omitted.
 - **Credential text stays out of results** — the bearer token is not copied into tool text. A mounted credentials service does not fall through to the environment when the reference is unset.

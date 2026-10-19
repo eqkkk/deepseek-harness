@@ -22,13 +22,13 @@ export function tablePath(id: string): string {
 }
 
 /**
- * Run one semantic aggregate.
+ * Run one business-table query.
+ * `semantic_query` posts an aggregate body: `metrics`, `dimensions`, `filters`, `orderBy`, and `limit`.
+ * `drilldown` posts a detail body: `filters`, `columns`, `limit`, `offset`, and `parentQueryId` when the model sent one.
+ * The business table id is the `{id}` segment. This module does not request a records route.
  * @param id - business table id.
  * @returns the path relative to the configured origin.
  */
 export function queryPath(id: string): string {
   return `api/v1/business-tables/${encodeURIComponent(id)}/query`
 }
-
-/** Detail-record query path. */
-export const RECORDS_PATH = 'api/v1/records/query'

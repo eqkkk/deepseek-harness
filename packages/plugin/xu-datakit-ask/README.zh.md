@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-面向单个 Host 的只读 xu-datakit 问数工具。插件在 `ctx.tools` 上注册 `discover_bt`、`semantic_query`、`drilldown` 和 `cite`。聚合与下钻走平台 HTTP API。`cite` 在进程内组装审计引用。本包不打开物理 SQL 通道。
+面向单个 Host 的只读 xu-datakit 问数工具。插件在 `ctx.tools` 上注册 `discover_bt`、`semantic_query`、`drilldown` 和 `cite`。`discover_bt` 使用 GET 列表和 GET 详情。`semantic_query` 与 `drilldown` 都 POST `/api/v1/business-tables/{id}/query`。`cite` 在进程内组装审计引用。本包不打开物理 SQL 通道。
 
 ## 工具
 
@@ -10,8 +10,10 @@
 |---|---|---|
 | `discover_bt` | `GET /api/v1/business-tables?domain=`，然后 `GET /api/v1/business-tables/{id}` | `Discovered <n> business table(s) in domain <domain>.` |
 | `semantic_query` | `POST /api/v1/business-tables/{id}/query` | `Aggregate result for <id>: <n> row(s).`；平台返回 id 时还有 ` Query id: <queryId>.` |
-| `drilldown` | `POST /api/v1/records/query` | `Drilldown for <id>: <n> row(s).` |
+| `drilldown` | `POST /api/v1/business-tables/{id}/query` | `Drilldown for <id>: <n> row(s).` |
 | `cite` | 无 | `Citation: business tables <ids>. Predicates: <predicates>. Query ids: <ids>. Columns: <columns>.`；`note` 为非空字符串时再加 ` Note: <note>.` |
+
+`semantic_query` 提交 `metrics`、`dimensions`、`filters`、`orderBy` 和 `limit`。`drilldown` 提交 `filters`、`columns`、`limit`、`offset`，以及模型提供了 `parentQueryId` 时的该字段。业务表 id 在路径段里。
 
 `semantic_query` 为调用方 agent 记住业务表、过滤条件、列和 query id。`drilldown` 对这份记忆只能执行一次。同一 agent 上一次成功的 `semantic_query` 会替换它。`cite` 把模型给出的 id、谓词和 query id 与这份记忆取并集，并复制记住的列。空的谓词列表、query id 列表或列列表渲染为 `(none)`。
 
@@ -95,5 +97,5 @@
 - **仅可选挂载** — 默认 Headless 与 base profile 不挂载本插件。profile 插入 patch 之后工具才存在。
 - **进程内引用记忆** — 最近一次聚合和一次性下钻闩锁保存在内存中，键为 agent id。重启后丢失。本包不追加自己的会话事件。
 - **每次聚合只能下钻一次** — 同一 agent 上的第二次 `drilldown` 会被拒绝，直到下一次成功的 `semantic_query` 替换这份记忆。
-- **没有物理 SQL 通道** — 客户端只调用文档中的四条 HTTP 路由；`cite` 不调用。被禁止的查询文本会被拒绝或省略。
+- **没有物理 SQL 通道** — `discover_bt` 使用两条 GET 业务表路由。`semantic_query` 与 `drilldown` 都 POST `.../query`。`cite` 不调用平台。被禁止的查询文本会被拒绝或省略。
 - **凭证文本不进入结果** — bearer 令牌不会复制进工具文本。凭证服务已挂载且引用未设置时，不会回落到环境变量。
